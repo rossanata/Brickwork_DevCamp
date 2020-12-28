@@ -1,20 +1,19 @@
 import copy
 
-# Valid input data is presumed. Only requested validation included in the solution. No validation introduced for wrong
-# combination and position of numbers, data types used, etc. as it is not included in the requirements.
+# Valid input data is presumed. Only requested validations included in the solution. No validation introduced for wrong
+# combination and position of numbers, data types used, etc. (except for bricks spanning 3 rows/ columns).
 
 # The directions used in the source code are based on the projection of the 3d brick layer as seen from above:
-# right and left (horizontal), up and down (vertical)
 #
 #                                                           +----+----+----+----+
 #          projection axis                                 / 1  / 1  / 2  / 2  /|
 #         ^                                               +----+----+----+----+ |
-#         |     vertical(up,  down)                      / 3  / 3  / 4  / 4  /| +
+#         |     vertical(up)                             / 3  / 3  / 4  / 4  /| +
 #         |   ^                                         +----+----+----+----+ |/
 #         |  /                                          |    |    |    |    | +
 #         | /                                           |    |    |    |    |/
 #         |/                                            +----+----+----+----+
-#         +-----------> horizontal(right, left)
+#         +-----------> horizontal(right)
 
 
 def is_odd(num):
@@ -37,34 +36,38 @@ def is_brick_3cells(layer):
 
 
 # Check if brick can lie on the current cell and the neighbouring cell on the right side of current cell
+# layer_one and layer_two are multidimensional lists with the same size
+# layer_two is initially filled with zeros in every single cell to mark the empty cells.
 # row is row index of current cell
 # col is column index of current cell
 def is_horizontal_brick_allowed(layer_one, layer_two, row, col):
     if col + 1 < len(layer_one[0]):
-        if layer_one[row][col] != layer_one[row][col + 1] and \
-                layer_two[row][col + 1] == 0:
+        if layer_one[row][col] != layer_one[row][col + 1] \
+                and layer_two[row][col + 1] == 0:
             return True
+    return False
 
 
 # Check if brick can lie on the current cell and the neighbouring cell on the bottom side of current cell
+# layer_one and layer_two are multidimensional lists with the same size
+# layer_two is initially filled with zeros in every single cell to mark the empty cells.
 # row is row index of current cell
 # col is column index of current cell
 def is_vertical_brick_allowed(layer_one, layer_two, row, col):
     if row + 1 < len(layer_one):
-        if layer_one[row][col] != layer_one[row + 1][col]:
-            if layer_two[row + 1][col] == 0:
-                return True
+        if layer_one[row][col] != layer_one[row + 1][col] \
+                and layer_two[row + 1][col] == 0:
+            return True
+    return False
 
 
-# Verify that all cells of the second layer are filled
+# Verify that all cells of the second layer are filled with bricks (no cells filled with zeros, which is the empty mark)
 def is_layer_2_complete(layer_two):
-    is_complete = True
     for i in range(len(layer_two)):
         for j in range(len(layer_two[0])):
             if layer_two[i][j] == 0:
-                is_complete = False
-                return is_complete
-    return is_complete
+                return False
+    return True
 
 
 # visualize_layer function separates bricks with asterisks horizontally and with dashes vertically. It also outlines a
@@ -120,8 +123,8 @@ def visualize_layer(layer):
                 for i in range(3):
                     temp_layer[2 * row + i][7 * col] = '*'
 
-            # # Not first row and column cell -> top left separator '-' if neighbouring cell on the left is the same and
-            # # above two cells form a brick as well
+            # Not first row and column cell -> top left separator '-' if neighbouring cell on the left is the same and
+            # above two cells form a brick as well
             #
             #         1      2      2      3
             #                   -
@@ -199,7 +202,6 @@ def find_second_layer(layer_1, layer_2, row=0, col=0, brick_number=1):
                     success_layer = find_second_layer(layer_1, layer_3, row, col + 2, brick_number + 1)
                     if success_layer:
                         return success_layer
-
                 if is_vertical_brick_allowed(layer_1, layer_2, row, col):
                     layer_2[row][col] = brick_number
                     layer_2[row + 1][col] = brick_number
@@ -223,9 +225,9 @@ def find_second_layer(layer_1, layer_2, row=0, col=0, brick_number=1):
         return None
 
 
-
-
 # Main function that handles the assignment input and output
+# In order to validate input has exactly a certain number of rows, additional details are needed e.g. format of input,
+# waiting time for input or confirmation for end of file from user.
 def main():
     (rows_count, columns_count) = [int(x) for x in input().split()]
 
@@ -241,6 +243,9 @@ def main():
         layer_1 = []
         for _ in range(rows_count):
             current_row = [int(x) for x in input().split()]
+            if len(current_row) != columns_count:
+                print(f'Input should have exactly {columns_count} columns')
+                return
             layer_1.append(current_row)
 
         if is_brick_3cells(layer_1):
@@ -250,6 +255,9 @@ def main():
             success_layer = find_second_layer(layer_1, empty_layer)
             if success_layer:
                 print(visualize_layer(success_layer))
+                # In case output without borderlines and separators is needed.
+                # for i in range(len(success_layer)):
+                #     print(' '.join(str(j) for j in (success_layer[i])))
             else:
                 print('No solution found')
                 exit(-1)
